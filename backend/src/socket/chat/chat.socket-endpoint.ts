@@ -4,6 +4,7 @@ import { SendMessageSocketHandler } from "./send-message.socket-handler";
 
 export interface ChatContext {
   roomId: string;
+  clientId: string;
   clientName: string;
 }
 

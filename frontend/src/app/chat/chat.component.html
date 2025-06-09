@@ -1,1 +1,208 @@
-<p class="text-red-500">chat works!</p>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
+  
+  <!-- Lobby View -->
+  <div *ngIf="currentView === 'lobby'" class="w-full max-w-4xl">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+      
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-8 py-6">
+        <h1 class="text-3xl font-bold text-white mb-2">Chat Rooms</h1>
+        <p class="text-blue-100">Choose a room to join or create your own</p>
+      </div>
+      
+      <!-- Content -->
+      <div class="p-8">
+        
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3 mb-8">
+          <button 
+            (click)="chatEventHandler.clickCreateRoom()"
+            [class]="'px-6 py-3 rounded-xl font-semibold transition-all duration-200 ' + 
+                     (isCreatingRoom ? 'bg-green-600 text-white shadow-lg' : 'bg-green-100 text-green-700 hover:bg-green-200')"
+          >
+            <i class="fas fa-plus mr-2"></i>Create Room
+          </button>
+        </div>
+        
+        <!-- Available Rooms -->
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800 mb-6">Available Rooms</h2>
+          
+          <div class="grid gap-4">
+            <div 
+              *ngFor="let room of availableRooms" 
+              class="group bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-200 cursor-pointer"
+              (click)="chatEventHandler.clickJoinRoom(room.id)"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <h3 class="text-lg font-semibold text-gray-800 group-hover:text-blue-600 transition-colors">
+                    {{ room.id }}
+                  </h3>
+                  <p class="text-gray-500 text-sm mt-1">Room ID: {{ room.id }}</p>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                  <div class="flex items-center text-gray-600">
+                    <i class="fas fa-users mr-2"></i>
+                    <span class="font-medium">{{ room.clients.length }}</span>
+                  </div>
+                  
+                  <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i class="fas fa-arrow-right text-blue-600"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="availableRooms?.length ?? 0 === 0" class="text-center py-12">
+            <div class="text-gray-400 mb-4">
+              <i class="fas fa-comments text-4xl"></i>
+            </div>
+            <p class="text-gray-500">No rooms available. Create one to get started!</p>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+  <!-- Chat Room View -->
+  <div *ngIf="currentView === 'chat'" class="w-full max-w-5xl h-[90vh] flex flex-col">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col h-full">
+      
+      <!-- Chat Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <button 
+            (click)="chatEventHandler.clickLeaveRoom()"
+            class="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+          >
+            <i class="fas fa-arrow-left"></i>
+          </button>
+          
+          <div>
+            <h2 class="text-xl font-bold text-white">{{ currentRoom?.id }}</h2>
+          </div>
+        </div>
+        
+        <div class="flex items-center space-x-4 text-white">
+          <button 
+            (click)="chatEventHandler.clickLeaveRoom()"
+            class="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg font-semibold transition-colors flex items-center space-x-2"
+          >
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="hidden sm:inline">Leave Room</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Main Chat Area -->
+      <div class="flex-1 flex min-h-0">
+        
+        <!-- Messages Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+          
+          <!-- Messages Container -->
+          <div class="flex-1 overflow-y-auto p-6 messages-container">
+            <div class="space-y-4">
+              
+              <div *ngFor="let message of messages; trackBy: trackMessage" class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                  <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-sm font-semibold">
+                      {{ message.sender.name.charAt(0).toUpperCase() }}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-baseline space-x-2 mb-1">
+                    <span class="font-semibold text-gray-800">{{ message.sender.name }}</span>
+                    <span class="text-xs text-gray-500">{{ formatTime(message.timestamp) }}</span>
+                  </div>
+                  
+                  <div 
+                    [class]="'inline-block px-4 py-2 rounded-lg max-w-xs break-words ' + 
+                             (message.sender.id === currentUser.id ? 'bg-blue-600 text-white ml-auto' : 'bg-gray-100 text-gray-800')"
+                  >
+                    {{ message.message }}
+                  </div>
+                </div>
+              </div>
+              
+            </div>
+            
+            <!-- Empty State -->
+            <div *ngIf="messages?.length ?? 0 === 0" class="text-center py-12">
+              <div class="text-gray-400 mb-4">
+                <i class="fas fa-comment-dots text-4xl"></i>
+              </div>
+              <p class="text-gray-500">No messages yet. Start the conversation!</p>
+            </div>
+          </div>
+          
+          <!-- Message Input -->
+          <div class="border-t border-gray-200 p-6">
+            <div class="flex space-x-4">
+              <div class="flex-1">
+                <textarea
+                  [(ngModel)]="inputMessage"
+                  (keydown)="chatEventHandler.onMessageKeyPress($event)"
+                  placeholder="Type your message..."
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows="1"
+                  maxlength="500"
+                ></textarea>
+              </div>
+              
+              <button 
+                (click)="chatEventHandler.clickSendMessage()"
+                [disabled]="!inputMessage.trim()"
+                class="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              >
+                <i class="fas fa-paper-plane"></i>
+                <span class="hidden sm:inline">Send</span>
+              </button>
+            </div>
+          </div>
+          
+        </div>
+        
+        <!-- Online Users Sidebar -->
+        <div class="w-64 border-l border-gray-200 bg-gray-50">
+          <div class="p-4 border-b border-gray-200">
+            <span class="font-semibold text-gray-800">Online Users</span>
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span class="text-sm">{{ currentRoom?.clients?.length || 0 }} online</span>
+            </div>
+          </div>
+          
+          <div class="p-4 space-y-3">
+            <div *ngFor="let user of currentRoom?.clients || []" class="flex items-center space-x-3">
+              <div class="relative">
+                <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
+                  <span class="text-white text-sm font-semibold">
+                    {{ user.name.charAt(0).toUpperCase() }}
+                  </span>
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+              </div>
+              
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-800 truncate">
+                  {{ user.name }}
+                  <span *ngIf="user.id === currentUser.id" class="text-blue-600 font-normal">(You)</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </div>
+  
+</div>

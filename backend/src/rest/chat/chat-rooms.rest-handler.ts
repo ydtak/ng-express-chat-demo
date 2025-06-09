@@ -6,7 +6,10 @@ export interface ChatRoomsRequest {}
 export interface ChatRoomsResponse {
   rooms: {
     roomId: string;
-    clientCount: number;
+    clients: {
+      clientId: string;
+      clientName: string;
+    }[];
   }[];
 }
 
@@ -18,7 +21,7 @@ export const getChatRoomsRestHandler = async (
   res.json({
     rooms: rooms.map((roomId) => ({
       roomId,
-      clientCount: chatRoomService.getClientsInRoom(roomId).length,
+      clients: chatRoomService.getClientsInRoom(roomId),
     })),
   });
 };

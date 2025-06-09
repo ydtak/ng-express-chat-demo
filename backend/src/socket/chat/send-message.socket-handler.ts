@@ -1,6 +1,7 @@
 import { Socket } from "socket.io";
 import { AbstractSocketHandler } from "../api/abstract-socket-endpoint";
 import { ChatContext } from "./chat.socket-endpoint";
+import { chatRoomService } from "../../service/chat-room.service";
 
 export interface SendMessageRequest {
   message: string;
@@ -10,8 +11,9 @@ export class SendMessageSocketHandler implements AbstractSocketHandler<SendMessa
 
   handle(data: SendMessageRequest, socket: Socket, context: ChatContext): void {
     socket.to(context.roomId).emit("message-sent", {
+      id: socket.id + "-" + new Date().getTime(),
       message: data.message,
-      senderName: context.clientName,
+      sender: chatRoomService.getClientsInRoom(context.roomId).find((client) => client.clientId === socket.id)
     });
   }
 

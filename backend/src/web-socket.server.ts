@@ -49,29 +49,30 @@ export class WebSocketServer {
 
           // Handle the message.
           try {
-            handler.handle(data, socket, connectionContext);
+            handler.handle(data.request, socket, connectionContext);
           } catch (error) {
             this.emitError(socket, `Error handling message: ${error}`);
           }
         });
       });
-    });
 
-    this.socketIOServer.on("disconnect", (socket) => {
-      console.log(`Socket client disconnected: ${socket.id}`);
-      let connectionContext = this.clientContexts.get(socket.id);
-      if (!connectionContext) {
-        console.error(`No connection context found for socket: ${socket.id}`);
-        connectionContext = new Map<string, any>();
-      }
+      // Handle disconnection for this socket.
+      socket.on("disconnect", (reason) => {
+        console.log(`Socket client disconnected: ${socket.id}, reason: ${reason}`);
+        let connectionContext = this.clientContexts.get(socket.id);
+        if (!connectionContext) {
+          console.error(`No connection context found for socket: ${socket.id}`);
+          connectionContext = new Map<string, any>();
+        }
 
-      // Notify each of the endpoints that the client disconnected.
-      for (const endpoint of this.endpoints.values()) {
-        endpoint.onDisconnect(socket, connectionContext);
-      }
+        // Notify each of the endpoints that the client disconnected.
+        for (const endpoint of this.endpoints.values()) {
+          endpoint.onDisconnect(socket, connectionContext);
+        }
 
-      // Clean up the connection context.
-      this.clientContexts.delete(socket.id);
+        // Clean up the connection context.
+        this.clientContexts.delete(socket.id);
+      });
     });
   }
 
