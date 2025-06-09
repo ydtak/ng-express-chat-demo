@@ -135,7 +135,7 @@
             </div>
             
             <!-- Empty State -->
-            <div *ngIf="messages?.length ?? 0 === 0" class="text-center py-12">
+            <div *ngIf="messages.length == 0" class="text-center py-12">
               <div class="text-gray-400 mb-4">
                 <i class="fas fa-comment-dots text-4xl"></i>
               </div>

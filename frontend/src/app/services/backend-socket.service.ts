@@ -134,34 +134,38 @@ export class BackendSocketService {
   private setupEventListeners(): void {
     if (!this.socket) return;
 
-    // Handle room joined event
-    this.socket.on('room-joined', (data: RoomJoinedResponse) => {
-      this.notifyListeners(listener => listener.onRoomJoined(data));
+    // Set up standard event-to-listener mappings
+    const eventMappings = [
+      {
+        eventName: 'room-joined',
+        handler: (data: RoomJoinedResponse) => (listener: ConnectionListener) => listener.onRoomJoined(data)
+      },
+      {
+        eventName: 'client-left', 
+        handler: (data: ClientLeftResponse) => (listener: ConnectionListener) => listener.onClientLeft(data)
+      },
+      {
+        eventName: 'message-sent',
+        handler: (data: MessageSentResponse) => (listener: ConnectionListener) => listener.onMessageSent(data)
+      }
+    ];
+
+    // Register all standard event mappings
+    eventMappings.forEach(({ eventName, handler }) => {
+      this.socket!.on(eventName, (data: any) => {
+        this.notifyListeners(handler(data));
+      });
     });
 
-    // Handle client left event
-    this.socket.on('client-left', (data: ClientLeftResponse) => {
-      this.notifyListeners(listener => listener.onClientLeft(data));
-    });
-
-    // Handle message sent event
-    this.socket.on('message-sent', (data: MessageSentResponse) => {
-      this.notifyListeners(listener => listener.onMessageSent(data));
-    });
-
-    // Handle disconnect
+    // Handle special events that don't follow the standard pattern
     this.socket.on('disconnect', (reason: string) => {
       const socketId = this.socket?.id || '';
       this.connectionListeners.delete(socketId);
     });
-
-    // Handle reconnection
     this.socket.on('reconnect', () => {
       // Note: On reconnection, the connection process should be restarted
       // as the socket ID might change
     });
-
-    // Handle general errors
     this.socket.on('error', (error: any) => {
       LOG_ERROR(`Socket error: ${error.message || error}`);
     });
